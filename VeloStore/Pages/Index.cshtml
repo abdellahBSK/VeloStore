@@ -1,0 +1,117 @@
+﻿@page
+@model VeloStore.Pages.IndexModel
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<h2 class="mb-4">
+    Bienvenue sur <span class="text-warning">VeloStore</span>
+</h2>
+
+<!-- 🔍 RECHERCHE & FILTRES -->
+<form method="get" class="row g-2 mb-4 bg-white p-3 rounded shadow-sm">
+
+    <!-- Recherche -->
+    <div class="col-md-4">
+        <input type="text"
+               name="query"
+               value="@Model.Search.Query"
+               class="form-control"
+               placeholder="Rechercher un produit..." />
+    </div>
+
+    <!-- Prix min -->
+    <div class="col-md-2">
+        <input type="number"
+               name="minPrice"
+               value="@Model.Search.MinPrice"
+               class="form-control"
+               placeholder="Prix min" />
+    </div>
+
+    <!-- Prix max -->
+    <div class="col-md-2">
+        <input type="number"
+               name="maxPrice"
+               value="@Model.Search.MaxPrice"
+               class="form-control"
+               placeholder="Prix max" />
+    </div>
+
+    <!-- Tri -->
+    <div class="col-md-2">
+        <select name="sort" class="form-select">
+            <option value="">Trier par</option>
+            <option value="price_asc"
+                    selected="@(Model.Search.Sort == "price_asc")">
+                Prix ↑
+            </option>
+            <option value="price_desc"
+                    selected="@(Model.Search.Sort == "price_desc")">
+                Prix ↓
+            </option>
+        </select>
+    </div>
+
+    <!-- Bouton -->
+    <div class="col-md-2">
+        <button class="btn btn-dark w-100">
+            Filtrer
+        </button>
+    </div>
+</form>
+
+<!-- 🧾 PRODUITS -->
+<div class="row">
+    @foreach (var product in Model.Products)
+    {
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm product-card">
+
+                <!-- Image + lien détails -->
+                <a asp-page="/Product/Details" asp-route-id="@product.Id">
+                    <img src="@product.ImageUrl"
+                         class="card-img-top p-3"
+                         style="height:200px; object-fit:contain;" />
+                </a>
+
+                <div class="card-body d-flex flex-column">
+
+                    <!-- Nom -->
+                    <a asp-page="/Product/Details"
+                       asp-route-id="@product.Id"
+                       class="text-decoration-none text-dark">
+                        <h6 class="card-title product-title">
+                            @product.Name
+                        </h6>
+                    </a>
+
+                    <!-- Prix -->
+                    <p class="text-danger fw-bold mb-2">
+                        @product.Price MAD
+                    </p>
+
+                    <!-- Panier -->
+                    <form method="post"
+                          asp-page-handler="AddToCart"
+                          class="mt-auto">
+                        <input type="hidden"
+                               name="productId"
+                               value="@product.Id" />
+                        <button type="submit"
+                                class="btn btn-warning w-100">
+                            Ajouter au panier
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Products.Any())
+{
+    <div class="alert alert-warning mt-4">
+        Aucun produit trouvé.
+    </div>
+}

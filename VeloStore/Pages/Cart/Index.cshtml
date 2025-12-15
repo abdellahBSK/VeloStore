@@ -1,0 +1,49 @@
+﻿@page
+@model VeloStore.Pages.Cart.IndexModel
+
+<h2 class="mb-4"> Votre panier</h2>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Votre panier est vide</div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th>Prix</th>
+                <th>Qté</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <img src="@item.ImageUrl" width="60" class="me-2" />
+                        @item.ProductName
+                    </td>
+                    <td>@item.Price MAD</td>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <button asp-page-handler="Decrease" class="btn btn-outline-secondary btn-sm">−</button>
+                            <span class="mx-2 fw-bold">@item.Quantity</span>
+                            <button asp-page-handler="Increase" class="btn btn-outline-secondary btn-sm">+</button>
+                        </form>
+                    </td>
+                    <td class="fw-bold text-danger">@item.Total MAD</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4 class="text-end">
+        Total : <span class="text-danger">
+            @Model.Items.Sum(i => i.Total) MAD
+        </span>
+    </h4>
+}
