@@ -1,6 +1,6 @@
 # 🛒 VeloStore — E-Commerce Platform
 
-VeloStore is a **professional e-commerce web application *, built with **ASP.NET Core Razor Pages**, following **MVVM architecture**, using **Entity Framework Core** and **SQL Server**.
+VeloStore is a **professional e-commerce web application**, built with **ASP.NET Core Razor Pages**, following **MVVM architecture**, using **Entity Framework Core** and **SQL Server**.
 
 This project is designed as a **real-world, scalable e-commerce system**, suitable for **portfolio, PFE, and professional demonstration**.
 
