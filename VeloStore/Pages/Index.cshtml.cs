@@ -79,7 +79,7 @@ namespace VeloStore.Pages
         }
 
         /// <summary>
-        /// POST: Add product to cart (requires authentication)
+        /// POST: Add product to cart (works for both authenticated and guest users)
         /// </summary>
         public async Task<IActionResult> OnPostAddToCartAsync(int productId)
         {
@@ -116,11 +116,6 @@ namespace VeloStore.Pages
 
                 TempData["SuccessMessage"] = $"{product.Name} added to cart successfully!";
                 return RedirectToPage();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                _logger.LogWarning("Unauthorized attempt to add product {ProductId} to cart", productId);
-                return Challenge(); // Redirect to login
             }
             catch (Exception ex)
             {

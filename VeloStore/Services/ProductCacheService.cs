@@ -75,7 +75,11 @@ namespace VeloStore.Services
                         if (products != null && products.Any())
                         {
                             // Populate L1 cache from L2
-                            _memoryCache.Set(HOME_PRODUCTS_MEMORY_KEY, products, _memoryCacheDuration);
+                            var cacheEntryOptions = new MemoryCacheEntryOptions
+                            {
+                                AbsoluteExpirationRelativeToNow = _memoryCacheDuration
+                            };
+                            _memoryCache.Set(HOME_PRODUCTS_MEMORY_KEY, products, cacheEntryOptions);
                             _logger.LogDebug("Home products retrieved from Redis cache and stored in memory");
                             return products;
                         }
@@ -199,7 +203,11 @@ namespace VeloStore.Services
                         var product = JsonSerializer.Deserialize<ProductDetailsVM>(redisData, _jsonOptions);
                         if (product != null)
                         {
-                            _memoryCache.Set(cacheKey, product, _productDetailsCacheDuration);
+                            var cacheEntryOptions = new MemoryCacheEntryOptions
+                            {
+                                AbsoluteExpirationRelativeToNow = _productDetailsCacheDuration
+                            };
+                            _memoryCache.Set(cacheKey, product, cacheEntryOptions);
                             _logger.LogDebug("Product {ProductId} retrieved from Redis cache", productId);
                             return product;
                         }
@@ -228,7 +236,11 @@ namespace VeloStore.Services
                 if (dbProduct != null)
                 {
                     // Cache the result
-                    _memoryCache.Set(cacheKey, dbProduct, _productDetailsCacheDuration);
+                    var cacheEntryOptions = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = _productDetailsCacheDuration
+                    };
+                    _memoryCache.Set(cacheKey, dbProduct, cacheEntryOptions);
                     
                     try
                     {
@@ -301,7 +313,11 @@ namespace VeloStore.Services
         private async Task PopulateCachesAsync(List<HomeProductVM> products)
         {
             // Populate memory cache (L1)
-            _memoryCache.Set(HOME_PRODUCTS_MEMORY_KEY, products, _memoryCacheDuration);
+            var cacheEntryOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = _memoryCacheDuration
+            };
+            _memoryCache.Set(HOME_PRODUCTS_MEMORY_KEY, products, cacheEntryOptions);
 
             // Populate Redis cache (L2)
             try

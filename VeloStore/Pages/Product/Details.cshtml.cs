@@ -58,7 +58,7 @@ namespace VeloStore.Pages.Product
         }
 
         /// <summary>
-        /// POST: Add product to cart (requires authentication)
+        /// POST: Add product to cart (works for both authenticated and guest users)
         /// </summary>
         public async Task<IActionResult> OnPostAddToCartAsync(int productId)
         {
