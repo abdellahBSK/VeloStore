@@ -1,78 +1,133 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using VeloStore.Data;
+using Microsoft.Extensions.Logging;
 using VeloStore.Services;
 using VeloStore.ViewModels;
 
 namespace VeloStore.Pages
 {
+    /// <summary>
+    /// Home page with professional multi-layer caching strategy
+    /// </summary>
     public class IndexModel : PageModel
     {
-        private readonly VeloStoreDbContext _context;
-        private readonly CartService _cartService;
+        private readonly IProductCacheService _productCacheService;
+        private readonly ICartService _cartService;
+        private readonly ILogger<IndexModel> _logger;
 
-        public IndexModel(VeloStoreDbContext context, CartService cartService)
+        public IndexModel(
+            IProductCacheService productCacheService,
+            ICartService cartService,
+            ILogger<IndexModel> logger)
         {
-            _context = context;
+            _productCacheService = productCacheService;
             _cartService = cartService;
+            _logger = logger;
         }
 
         public List<HomeProductVM> Products { get; set; } = new();
-
         public SearchVM Search { get; set; } = new();
 
-        public async Task OnGetAsync(string? query, decimal? minPrice, decimal? maxPrice, string? sort)
+        /// <summary>
+        /// GET: Home page with search and filtering
+        /// Uses multi-layer caching for unfiltered results
+        /// </summary>
+        public async Task OnGetAsync(
+            string? query,
+            decimal? minPrice,
+            decimal? maxPrice,
+            string? sort)
         {
-            Search = new SearchVM
+            try
             {
-                Query = query,
-                MinPrice = minPrice,
-                MaxPrice = maxPrice,
-                Sort = sort
-            };
+                Search = new SearchVM
+                {
+                    Query = query,
+                    MinPrice = minPrice,
+                    MaxPrice = maxPrice,
+                    Sort = sort
+                };
 
-            var productsQuery = _context.Products.AsQueryable();
+                bool hasFilters =
+                    !string.IsNullOrWhiteSpace(query) ||
+                    minPrice.HasValue ||
+                    maxPrice.HasValue ||
+                    !string.IsNullOrWhiteSpace(sort);
 
-            if (!string.IsNullOrWhiteSpace(query))
-                productsQuery = productsQuery.Where(p => p.Name.Contains(query));
-
-            if (minPrice.HasValue)
-                productsQuery = productsQuery.Where(p => p.Price >= minPrice);
-
-            if (maxPrice.HasValue)
-                productsQuery = productsQuery.Where(p => p.Price <= maxPrice);
-
-            productsQuery = sort switch
+                // Use cached products if no filters (multi-layer cache: Memory -> Redis -> DB)
+                if (!hasFilters)
+                {
+                    Products = await _productCacheService.GetHomeProductsAsync();
+                }
+                else
+                {
+                    // For filtered results, query database directly (ensures accuracy)
+                    Products = await _productCacheService.GetFilteredProductsAsync(
+                        query,
+                        minPrice,
+                        maxPrice,
+                        sort);
+                }
+            }
+            catch (Exception ex)
             {
-                "price_asc" => productsQuery.OrderBy(p => p.Price),
-                "price_desc" => productsQuery.OrderByDescending(p => p.Price),
-                _ => productsQuery
-            };
-
-            Products = await productsQuery.Select(p => new HomeProductVM
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                ImageUrl = p.ImageUrl
-            }).ToListAsync();
+                _logger.LogError(ex, "Error loading products on home page");
+                Products = new List<HomeProductVM>();
+                TempData["ErrorMessage"] = "An error occurred while loading products. Please try again.";
+            }
         }
 
-        public IActionResult OnPostAddToCart(int productId)
+        /// <summary>
+        /// POST: Add product to cart (requires authentication)
+        /// </summary>
+        public async Task<IActionResult> OnPostAddToCartAsync(int productId)
         {
-            var product = _context.Products.First(p => p.Id == productId);
-
-            _cartService.AddToCart(new CartItemVM
+            if (productId <= 0)
             {
-                ProductId = product.Id,
-                ProductName = product.Name,
-                Price = product.Price,
-                ImageUrl = product.ImageUrl,
-                Quantity = 1
-            });
+                _logger.LogWarning("Invalid product ID for cart: {ProductId}", productId);
+                return RedirectToPage();
+            }
 
-            return RedirectToPage();
+            try
+            {
+                // Get product from cache
+                var product = await _productCacheService.GetProductDetailsAsync(productId);
+
+                if (product == null)
+                {
+                    _logger.LogWarning("Product {ProductId} not found when adding to cart", productId);
+                    TempData["ErrorMessage"] = "Product not found.";
+                    return RedirectToPage();
+                }
+
+                // Check stock availability
+                if (product.Stock <= 0)
+                {
+                    TempData["ErrorMessage"] = "This product is out of stock.";
+                    return RedirectToPage();
+                }
+
+                await _cartService.AddToCartAsync(
+                    product.Id,
+                    product.Name,
+                    product.Price,
+                    product.ImageUrl);
+
+                TempData["SuccessMessage"] = $"{product.Name} added to cart successfully!";
+                return RedirectToPage();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                _logger.LogWarning("Unauthorized attempt to add product {ProductId} to cart", productId);
+                return Challenge(); // Redirect to login
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding product {ProductId} to cart", productId);
+                TempData["ErrorMessage"] = "An error occurred while adding the product to cart.";
+                return RedirectToPage();
+            }
         }
     }
 }

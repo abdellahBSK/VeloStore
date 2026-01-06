@@ -1,7 +1,7 @@
 ﻿@page
 @model VeloStore.Pages.Cart.IndexModel
 
-<h2 class="mb-4"> Votre panier</h2>
+<h2 class="mb-4">Votre panier</h2>
 
 @if (!Model.Items.Any())
 {
@@ -26,24 +26,37 @@ else
                         <img src="@item.ImageUrl" width="60" class="me-2" />
                         @item.ProductName
                     </td>
+
                     <td>@item.Price MAD</td>
-                    <td>
-                        <form method="post">
+
+                    <td class="d-flex align-items-center gap-2">
+                        <!-- DECREASE -->
+                        <form method="post" asp-page-handler="Decrease">
                             <input type="hidden" name="productId" value="@item.ProductId" />
-                            <button asp-page-handler="Decrease" class="btn btn-outline-secondary btn-sm">−</button>
-                            <span class="mx-2 fw-bold">@item.Quantity</span>
-                            <button asp-page-handler="Increase" class="btn btn-outline-secondary btn-sm">+</button>
+                            <button class="btn btn-outline-secondary btn-sm">−</button>
+                        </form>
+
+                        <span class="fw-bold">@item.Quantity</span>
+
+                        <!-- INCREASE -->
+                        <form method="post" asp-page-handler="Increase">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+                            <button class="btn btn-outline-secondary btn-sm">+</button>
                         </form>
                     </td>
-                    <td class="fw-bold text-danger">@item.Total MAD</td>
+
+                    <td class="fw-bold text-danger">
+                        @(item.Price* item.Quantity) MAD
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 
     <h4 class="text-end">
-        Total : <span class="text-danger">
-            @Model.Items.Sum(i => i.Total) MAD
+        Total :
+        <span class="text-danger">
+            @Model.Items.Sum(i => i.Price * i.Quantity) MAD
         </span>
     </h4>
 }

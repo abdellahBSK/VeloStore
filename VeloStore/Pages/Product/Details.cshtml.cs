@@ -1,57 +1,105 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using VeloStore.Data;
+using Microsoft.Extensions.Logging;
 using VeloStore.Services;
-using VeloStore.ViewModels;
 
 namespace VeloStore.Pages.Product
 {
+    /// <summary>
+    /// Product details page with caching support
+    /// </summary>
     public class DetailsModel : PageModel
     {
-        private readonly VeloStoreDbContext _context;
-        private readonly CartService _cartService;
+        private readonly IProductCacheService _productCacheService;
+        private readonly ICartService _cartService;
+        private readonly ILogger<DetailsModel> _logger;
 
-        public ProductDetailsVM Product { get; set; }
+        public ViewModels.ProductDetailsVM? Product { get; set; }
 
-        public DetailsModel(VeloStoreDbContext context, CartService cartService)
+        public DetailsModel(
+            IProductCacheService productCacheService,
+            ICartService cartService,
+            ILogger<DetailsModel> logger)
         {
-            _context = context;
+            _productCacheService = productCacheService;
             _cartService = cartService;
+            _logger = logger;
         }
 
+        /// <summary>
+        /// GET: Display product details with caching
+        /// </summary>
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == id);
-            if (p == null) return RedirectToPage("/Index");
-
-            Product = new ProductDetailsVM
+            if (id <= 0)
             {
-                Id = p.Id,
-                Name = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                Stock = p.Stock,
-                ImageUrl = p.ImageUrl
-            };
+                _logger.LogWarning("Invalid product ID: {ProductId}", id);
+                return RedirectToPage("/Index");
+            }
 
-            return Page();
+            try
+            {
+                Product = await _productCacheService.GetProductDetailsAsync(id);
+
+                if (Product == null)
+                {
+                    _logger.LogWarning("Product {ProductId} not found", id);
+                    return RedirectToPage("/Index");
+                }
+
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving product {ProductId}", id);
+                return RedirectToPage("/Index");
+            }
         }
 
-        public IActionResult OnPostAddToCart(int productId)
+        /// <summary>
+        /// POST: Add product to cart (requires authentication)
+        /// </summary>
+        public async Task<IActionResult> OnPostAddToCartAsync(int productId)
         {
-            var product = _context.Products.First(p => p.Id == productId);
-
-            _cartService.AddToCart(new CartItemVM
+            if (productId <= 0)
             {
-                ProductId = product.Id,
-                ProductName = product.Name,
-                Price = product.Price,
-                ImageUrl = product.ImageUrl,
-                Quantity = 1
-            });
+                _logger.LogWarning("Invalid product ID for cart: {ProductId}", productId);
+                return RedirectToPage("/Index");
+            }
 
-            return RedirectToPage("/Cart/Index");
+            try
+            {
+                var product = await _productCacheService.GetProductDetailsAsync(productId);
+
+                if (product == null)
+                {
+                    _logger.LogWarning("Product {ProductId} not found when adding to cart", productId);
+                    return RedirectToPage("/Index");
+                }
+
+                // Check stock availability
+                if (product.Stock <= 0)
+                {
+                    TempData["ErrorMessage"] = "This product is out of stock.";
+                    return RedirectToPage();
+                }
+
+                await _cartService.AddToCartAsync(
+                    product.Id,
+                    product.Name,
+                    product.Price,
+                    product.ImageUrl);
+
+                TempData["SuccessMessage"] = $"{product.Name} added to cart successfully!";
+                return RedirectToPage();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding product {ProductId} to cart", productId);
+                TempData["ErrorMessage"] = "An error occurred while adding the product to cart.";
+                return RedirectToPage();
+            }
         }
     }
 }
