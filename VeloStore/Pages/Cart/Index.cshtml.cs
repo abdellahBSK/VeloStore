@@ -8,9 +8,8 @@ using VeloStore.ViewModels;
 namespace VeloStore.Pages.Cart
 {
     /// <summary>
-    /// Shopping cart page - each user has their own cart stored in Redis
+    /// Shopping cart page - supports both authenticated users and guest carts
     /// </summary>
-    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly ICartService _cartService;
@@ -39,6 +38,7 @@ namespace VeloStore.Pages.Cart
         {
             try
             {
+                // Cart works for both authenticated and guest users
                 var cart = await _cartService.GetCartAsync();
 
                 Items = cart.Items.Select(i => new CartItemVM
@@ -57,7 +57,7 @@ namespace VeloStore.Pages.Cart
                 _logger.LogError(ex, "Error loading cart");
                 Items = new List<CartItemVM>();
                 Total = 0;
-                TempData["ErrorMessage"] = "An error occurred while loading your cart.";
+                TempData["ErrorMessage"] = "An error occurred while loading your cart. Please try again.";
             }
         }
 

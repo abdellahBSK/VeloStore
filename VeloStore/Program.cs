@@ -23,6 +23,16 @@ var redisInstanceName = builder.Configuration["CacheSettings:RedisInstanceName"]
 // Razor Pages
 builder.Services.AddRazorPages();
 
+// Session (for guest cart identification)
+builder.Services.AddDistributedMemoryCache(); // Fallback if Redis unavailable
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(6); // Match cart expiration
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 // DbContext
 builder.Services.AddDbContext<VeloStoreDbContext>(options =>
     options.UseSqlServer(
@@ -55,10 +65,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // =====================
 
 // L1: In-Memory Cache (Fastest, per-server)
-builder.Services.AddMemoryCache(options =>
-{
-    options.SizeLimit = 1024; // Limit cache size
-});
+builder.Services.AddMemoryCache();
 
 // L2: Redis Distributed Cache (Shared across servers)
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -77,6 +84,9 @@ builder.Services.AddHttpContextAccessor();
 // Register services with interfaces for testability
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IProductCacheService, ProductCacheService>();
+
+// Email sender (required by Identity)
+builder.Services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, EmailSender>();
 
 // =====================
 // LOGGING
@@ -114,6 +124,8 @@ app.Use(async (context, next) =>
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+app.UseSession(); // Enable session middleware
 
 app.UseRouting();
 

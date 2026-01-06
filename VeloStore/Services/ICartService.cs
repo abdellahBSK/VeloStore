@@ -36,6 +36,11 @@ namespace VeloStore.Services
         /// Gets the total number of items in the cart
         /// </summary>
         Task<int> GetCartItemCountAsync();
+
+        /// <summary>
+        /// Merges guest cart into user cart when user logs in
+        /// </summary>
+        Task MergeGuestCartIntoUserCartAsync(string guestSessionId);
     }
 }
 

@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using VeloStore.Models;
+using VeloStore.Services;
 
 namespace VeloStore.Areas.Identity.Pages.Account
 {
@@ -22,11 +23,16 @@ namespace VeloStore.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ICartService _cartService;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(
+            SignInManager<ApplicationUser> signInManager, 
+            ILogger<LoginModel> logger,
+            ICartService cartService)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _cartService = cartService;
         }
 
         /// <summary>
@@ -116,6 +122,22 @@ namespace VeloStore.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
+                    
+                    // Merge guest cart into user cart if session exists
+                    var guestSessionId = HttpContext.Session?.Id;
+                    if (!string.IsNullOrEmpty(guestSessionId))
+                    {
+                        try
+                        {
+                            await _cartService.MergeGuestCartIntoUserCartAsync(guestSessionId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to merge guest cart on login");
+                            // Don't fail login if cart merge fails
+                        }
+                    }
+                    
                     return LocalRedirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
