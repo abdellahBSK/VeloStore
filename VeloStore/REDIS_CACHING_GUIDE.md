@@ -96,7 +96,7 @@ var products = await _productCacheService.GetHomeProductsAsync();
 - **Authenticated Users**: `"VeloStore:cart:user:{userId}"`
 - **Guest Users**: `"VeloStore:cart:guest:{sessionId}"`
 - **On Login**: Guest cart automatically merges into user cart
-
+red
 **Storage**: Redis only (needs to be shared across servers)
 
 **Expiration**: 6 hours (sliding window - resets on each access)

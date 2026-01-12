@@ -163,9 +163,9 @@ redis-cli
 
 # Docker (if Redis is in Docker)
 docker exec -it redis redis-cli
+redis-cli -h localhost -p 6379
 
 # Remote Redis
-redis-cli -h your-redis-server -p 6379 -a your-password
 ```
 
 ### **2. Verify Redis Connection**

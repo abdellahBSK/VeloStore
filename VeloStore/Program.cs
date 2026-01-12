@@ -77,6 +77,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
 // HttpContext Accessor
 builder.Services.AddHttpContextAccessor();
 
+// HttpClient Factory (for RAG service LLM calls)
+builder.Services.AddHttpClient();
+
 // =====================
 // BUSINESS SERVICES
 // =====================
@@ -84,6 +87,9 @@ builder.Services.AddHttpContextAccessor();
 // Register services with interfaces for testability
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IProductCacheService, ProductCacheService>();
+
+// RAG Service (AI Shopping Assistant)
+builder.Services.AddScoped<IRagService, RagService>();
 
 // Email sender (required by Identity)
 builder.Services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, EmailSender>();
