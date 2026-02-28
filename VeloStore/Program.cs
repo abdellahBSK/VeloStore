@@ -141,6 +141,11 @@ app.UseAuthorization();
 app.MapRazorPages();
 
 // =====================
+// SEED DATABASE
+// =====================
+DbInitializer.Seed(app);
+
+// =====================
 // START APPLICATION
 // =====================
 app.Run();
