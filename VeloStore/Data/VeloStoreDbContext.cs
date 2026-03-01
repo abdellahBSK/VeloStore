@@ -15,5 +15,17 @@ namespace VeloStore.Data
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasPrecision(18, 2);
+
+            builder.Entity<CartItem>()
+                .Property(c => c.Price)
+                .HasPrecision(18, 2);
+        }
     }
 }

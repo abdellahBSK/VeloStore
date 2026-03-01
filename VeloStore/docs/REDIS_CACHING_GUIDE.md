@@ -2,6 +2,10 @@
 
 ## 📋 Overview
 
+redis-cli
+MONITOR
+
+
 VeloStore implements a **professional multi-layer caching strategy** using **IMemoryCache** and **Redis** to achieve maximum performance and minimize database load. This guide explains how caching works, how to use Redis, and how to verify and inspect cached data.
 
 ---

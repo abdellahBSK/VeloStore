@@ -5,6 +5,11 @@ using Microsoft.Extensions.Caching.StackExchangeRedis;
 using VeloStore.Data;
 using VeloStore.Models;
 using VeloStore.Services;
+using Npgsql;
+using VeloStore.Domain.Interfaces;
+using VeloStore.Application.Services;
+using VeloStore.Infrastructure.AI;
+using VeloStore.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,13 +88,38 @@ builder.Services.AddHttpClient();
 // =====================
 // BUSINESS SERVICES
 // =====================
-
-// Register services with interfaces for testability
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IProductCacheService, ProductCacheService>();
 
-// RAG Service (AI Shopping Assistant)
-builder.Services.AddScoped<IRagService, RagService>();
+// =====================
+// AI PIPELINE & DATA
+// =====================
+
+// Configure Npgsql Vector Data Source
+var aiDbConnection = builder.Configuration.GetConnectionString("VelostoreAiConnection")
+    ?? throw new InvalidOperationException("VelostoreAiConnection not found");
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(aiDbConnection);
+dataSourceBuilder.UseVector();
+var dataSource = dataSourceBuilder.Build();
+builder.Services.AddSingleton(dataSource);
+
+// Register Clean Architecture Core Services
+builder.Services.AddScoped<IVectorRepository, PgVectorRepository>();
+builder.Services.AddScoped<IEmbeddingService, OllamaEmbeddingService>();
+builder.Services.AddScoped<IRetrievalService, RetrievalService>();
+builder.Services.AddScoped<IRagOrchestrator, RagOrchestrator>();
+builder.Services.AddHostedService<VeloStore.Infrastructure.Background.ProductIndexingWorker>();
+
+builder.Services.AddHttpClient("OllamaClient", client => {
+    client.BaseAddress = new Uri("http://localhost:11434");
+})
+.AddStandardResilienceHandler(options => {
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(120);
+    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(60); 
+    options.CircuitBreaker.FailureRatio = 0.5;
+    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(120);
+    options.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(15);
+});
 
 // Email sender (required by Identity)
 builder.Services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, EmailSender>();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using VeloStore.Services;
 using VeloStore.ViewModels;
+using VeloStore.Domain.Interfaces;
 
 namespace VeloStore.Pages
 {
@@ -12,12 +13,12 @@ namespace VeloStore.Pages
     /// </summary>
     public class AssistantModel : PageModel
     {
-        private readonly IRagService _ragService;
+        private readonly IRagOrchestrator _ragOrchestrator;
         private readonly ILogger<AssistantModel> _logger;
 
-        public AssistantModel(IRagService ragService, ILogger<AssistantModel> logger)
+        public AssistantModel(IRagOrchestrator ragOrchestrator, ILogger<AssistantModel> logger)
         {
-            _ragService = ragService;
+            _ragOrchestrator = ragOrchestrator;
             _logger = logger;
         }
 
@@ -55,8 +56,9 @@ namespace VeloStore.Pages
 
             try
             {
-                // Process message through RAG service
-                RagResponse = await _ragService.ProcessMessageAsync(RagRequest);
+                // Process message through RAG orchestration layer
+                var answer = await _ragOrchestrator.AnswerQueryAsync(RagRequest.Message);
+                RagResponse = new RagResponseVM { Response = answer };
 
                 // Add to message history (in-memory for this session)
                 var sessionKey = $"AssistantMessages_{RagRequest.ConversationId ?? "default"}";
