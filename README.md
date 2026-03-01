@@ -30,10 +30,11 @@
 ### **Key Highlights**
 
 - ✅ **Enterprise-Grade Caching**: Multi-layer strategy (Memory → Redis → Database) reducing database load by 95%+
+- ✅ **Local AI Integration**: Completely local RAG (Retrieval-Augmented Generation) shopping assistant powered by Ollama and PostgreSQL pgvector.
 - ✅ **Production-Ready**: Comprehensive error handling, logging, and security best practices
 - ✅ **Scalable Architecture**: Interface-based design, dependency injection, MVVM pattern
 - ✅ **High Performance**: 90%+ faster page loads with intelligent caching
-- ✅ **Modern Stack**: ASP.NET Core 8, Entity Framework Core, Redis, SQL Server
+- ✅ **Modern Stack**: ASP.NET Core 8, Entity Framework Core, Redis, SQL Server, PostgreSQL
 
 ---
 
@@ -64,6 +65,13 @@
 - **Security Headers**: XSS, clickjacking, and MIME-sniffing protection
 - **HTTPS Enforcement**: Secure connections in production
 
+### 🤖 **AI Shopping Assistant (Local RAG)**
+- **Fully Local Privacy**: 100% cloud-free embeddings and generative models via Ollama.
+- **Hybrid Search**: Combines semantic cosine similarity with keyword search via PostgreSQL `pgvector`.
+- **Memory-Constrained Performance**: Optimized for standard developer hardware (CPU-only, 8GB RAM compatible).
+- **Prompt Isolation**: ChatML injection defense and rigid parameter sanitization.
+- **Background Sync**: Autonomous `IHostedService` thread generating embeddings efficiently.
+
 ### 🚀 **Performance Optimizations**
 - **Multi-Layer Caching**: Memory → Redis → Database strategy
 - **99%+ Cache Hit Rate**: Minimized database queries
@@ -84,7 +92,13 @@
 ### **Data & Persistence**
 - **Entity Framework Core 8.0** - Object-Relational Mapping
 - **SQL Server** - Primary relational database
+- **PostgreSQL + pgvector** - Dedicated vector database for AI embeddings
 - **Code-First Migrations** - Database versioning and schema management
+
+### **AI & Machine Learning**
+- **Ollama** - Local generative model orchestration
+- **phi3:mini** - Microsoft's efficient small language model for conversational context
+- **nomic-embed-text** - Fast, high-quality local text embedding model
 
 ### **Caching & Performance**
 - **IMemoryCache** - In-memory caching (L1)
@@ -153,7 +167,11 @@
 
 3. **Redis Server** (for caching)
    - Local installation or Docker container
-   - See [Redis & Caching Guide](REDIS_CACHING_GUIDE.md) for setup
+   - See [Redis & Caching Guide](docs/REDIS_CACHING_GUIDE.md) for setup
+
+4. **Ollama & PostgreSQL pgvector** (for AI Assistant)
+   - Running local Ollama instance with `phi3:mini` and `nomic-embed-text`
+   - Running PostgreSQL container with `pgvector` extension
 
 ### **Installation Steps**
 
@@ -326,7 +344,9 @@ VeloStore/
 
 ## 📚 Documentation
 
-- **[Redis & Caching Guide](REDIS_CACHING_GUIDE.md)** - Comprehensive guide on caching strategy and Redis usage
+- **[Redis & Caching Guide](docs/REDIS_CACHING_GUIDE.md)** - Comprehensive guide on caching strategy and Redis usage
+- **[Cache Analysis](docs/CACHE_ANALYSIS.md)** - Detailed analysis of the VeloStore cache behavior
+- **[Ollama RAG AI Architecture](docs/ollama_rag.md)** - Comprehensive breakdown of the fully local semantic AI shopping assistant
 
 ---
 
@@ -368,6 +388,7 @@ dotnet watch run
 - User authentication and authorization
 - Multi-layer caching implementation
 - Professional error handling and logging
+- Fully local Ollama AI Assistant with pgvector hybrid RAG
 
 ### **In Progress** 🔄
 - Admin panel for product management

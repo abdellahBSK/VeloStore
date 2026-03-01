@@ -1,0 +1,489 @@
+@page
+@model VeloStore.Pages.AssistantModel
+@{
+    ViewData["Title"] = "AI Shopping Assistant";
+}
+
+<style>
+    /* Premium AI Assistant Styles */
+    body {
+        /* Subtle animated background gradient */
+        background: linear-gradient(-45deg, #f8f9fa, #e9ecef, #dee2e6, #f8f9fa);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+
+    @@keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .glass-container {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.07);
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        background: rgba(255, 255, 255, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-header h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #0d6efd, #6610f2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .chat-messages {
+        height: 550px;
+        overflow-y: auto;
+        padding: 2rem;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(13, 110, 253, 0.3) transparent;
+        scroll-behavior: smooth;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background-color: rgba(13, 110, 253, 0.3);
+        border-radius: 20px;
+    }
+
+    .message-container {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1.5rem;
+        animation: slideIn 0.3s ease-out forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    @@keyframes slideIn {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-bubble {
+        max-width: 75%;
+        padding: 1rem 1.25rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+        position: relative;
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    .message-user {
+        background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+        color: white;
+        border-bottom-right-radius: 4px;
+        align-self: flex-end;
+    }
+
+    .message-assistant {
+        background: white;
+        color: #212529;
+        border-bottom-left-radius: 4px;
+        border: 1px solid rgba(0,0,0,0.05);
+        align-self: flex-start;
+    }
+
+    .message-meta {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    .message-user .message-meta {
+        color: rgba(255, 255, 255, 0.85);
+        text-align: right;
+    }
+
+    .message-assistant .message-meta {
+        color: #6c757d;
+    }
+
+    .message-sender {
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .message-user .message-sender {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .message-assistant .message-sender {
+        color: #0d6efd;
+    }
+
+    .input-area {
+        background: rgba(255, 255, 255, 0.7);
+        border-top: 1px solid rgba(255, 255, 255, 0.6);
+        padding: 1.5rem;
+    }
+
+    .modern-input {
+        border-radius: 30px 0 0 30px !important;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 1rem 1.5rem;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        font-size: 1rem;
+    }
+    
+    .modern-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        border-color: #0d6efd;
+        outline: none;
+        background: #ffffff;
+    }
+
+    .btn-send {
+        border-radius: 0 30px 30px 0 !important;
+        padding: 0 2rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+        transition: all 0.3s ease;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-send:hover {
+        background: linear-gradient(135deg, #0b5ed7, #0a53be);
+        box-shadow: -2px 0 15px rgba(13, 110, 253, 0.2);
+    }
+
+    .btn-clear {
+        border-radius: 20px;
+        padding: 0.4rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        background: transparent;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+    }
+
+    .btn-clear:hover {
+        background-color: #dc3545;
+        color: white;
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+        color: #6c757d;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+
+    .empty-icon {
+        font-size: 4.5rem;
+        color: #0d6efd;
+        margin-bottom: 1.5rem;
+        animation: float 3.5s ease-in-out infinite;
+        background: linear-gradient(135deg, #0d6efd, #6610f2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 10px 10px rgba(13,110,253,0.15));
+    }
+
+    @@keyframes float {
+        0% { transform: translateY(0px) scale(1); }
+        50% { transform: translateY(-15px) scale(1.02); }
+        100% { transform: translateY(0px) scale(1); }
+    }
+
+    .suggestion-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .suggestion-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.6rem 1.2rem;
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .suggestion-pill:hover {
+        background: #0d6efd;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+    }
+
+    .tool-call-alert {
+        background: rgba(13, 202, 253, 0.08);
+        border: 1px solid rgba(13, 202, 253, 0.3);
+        border-radius: 12px;
+        color: #087990;
+        padding: 0.75rem 1rem;
+        margin: 1rem 2rem;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+</style>
+
+<div class="container mt-5 mb-5 pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            
+            <!-- Glassmorphism Main Container -->
+            <div class="glass-container">
+                
+                <!-- Header -->
+                <div class="chat-header">
+                    <div>
+                        <h1>
+                            <i class="bi bi-robot"></i> AI Shopping Assistant
+                        </h1>
+                        <p class="text-muted mb-0 small" style="font-weight: 500;">
+                            Powered by Local RAG & Ollama Intelligence
+                        </p>
+                    </div>
+                    
+                    @if (Model.Messages != null && Model.Messages.Any())
+                    {
+                        <form method="post" asp-page-handler="Clear" class="m-0">
+                            <input asp-for="RagRequest.ConversationId" type="hidden" value="@(Model.RagRequest.ConversationId ?? Guid.NewGuid().ToString())" />
+                            <button type="submit" class="btn-clear">
+                                <i class="bi bi-trash"></i> Restart
+                            </button>
+                        </form>
+                    }
+                </div>
+
+                <!-- Error Messages -->
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger m-3 rounded-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                    </div>
+                }
+
+                <!-- Chat Display Area -->
+                <div class="chat-messages" id="chatWindow">
+                    @if (Model.Messages != null && Model.Messages.Any())
+                    {
+                        @foreach (var message in Model.Messages)
+                        {
+                            <div class="message-container" style="animation-delay: 0.05s;">
+                                <div class="message-bubble @(message.Role == "user" ? "message-user" : "message-assistant")">
+                                    <div class="message-sender">
+                                        @if (message.Role == "user")
+                                        {
+                                            <span><i class="bi bi-person-fill"></i> You</span>
+                                        }
+                                        else
+                                        {
+                                            <span><i class="bi bi-robot"></i> VeloStore AI</span>
+                                        }
+                                    </div>
+                                    <div class="message-content">
+                                        @Html.Raw(message.Content.Replace("\n", "<br/>"))
+                                    </div>
+                                    <span class="message-meta">
+                                        @message.Timestamp.ToLocalTime().ToString("t")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Engine Tool Response Action Alert -->
+                        @if (Model.RagResponse != null && Model.RagResponse.ToolCalls != null && Model.RagResponse.ToolCalls.Any())
+                        {
+                            <div class="tool-call-alert slideIn">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                                <span><strong>Execution:</strong> Accessed tools [ @string.Join(", ", Model.RagResponse.ToolCalls) ]</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Start Screen Empty State -->
+                        <div class="empty-state">
+                            <i class="bi bi-stars empty-icon"></i>
+                            <h3 class="fw-bold text-dark mb-2">How can I help you?</h3>
+                            <p class="mb-4">I can search the catalog, analyze product semantic similarities, or manage your cart.</p>
+                            
+                            <div class="suggestion-container">
+                                <div class="suggestion-pill" onclick="document.getElementById('RagRequest_Message').value = 'Show me all the products in the catalog'; document.getElementById('chatForm').submit();">
+                                    <i class="bi bi-search"></i> Browse Catalog
+                                </div>
+                                <div class="suggestion-pill" onclick="document.getElementById('RagRequest_Message').value = 'Do you have any products related to bikes?'; document.getElementById('chatForm').submit();">
+                                    <i class="bi bi-bicycle"></i> Search Bikes
+                                </div>
+                                <div class="suggestion-pill" onclick="document.getElementById('RagRequest_Message').value = 'What items are currently in my shopping cart?'; document.getElementById('chatForm').submit();">
+                                    <i class="bi bi-cart"></i> View Cart
+                                </div>
+                                <div class="suggestion-pill" onclick="document.getElementById('RagRequest_Message').value = 'Add product 1 to my cart please'; document.getElementById('chatForm').submit();">
+                                    <i class="bi bi-plus-circle"></i> Add Product
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Text Input Footer -->
+                <div class="input-area">
+                    <form method="post" id="chatForm" class="m-0">
+                        <div class="input-group">
+                            <input asp-for="RagRequest.Message" 
+                                   id="RagRequest_Message"
+                                   class="form-control modern-input" 
+                                   placeholder="Ask me anything..." 
+                                   autocomplete="off"
+                                   autofocus />
+                            <input asp-for="RagRequest.ConversationId" type="hidden" value="@(Model.RagRequest.ConversationId ?? Guid.NewGuid().ToString())" />
+                            <button id="sendBtn" type="submit" class="btn btn-primary btn-send">
+                                Send <i class="bi bi-send-fill ms-1"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="RagRequest.Message" class="text-danger small d-block mt-2 ms-3"></span>
+                    </form>
+                </div>
+                
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const chatWindow = document.getElementById('chatWindow');
+            const form       = document.getElementById('chatForm');
+            const input      = document.getElementById('RagRequest_Message');
+            const sendBtn    = document.getElementById('sendBtn');
+
+            // Auto-scroll on page load
+            if (chatWindow) {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+
+            if (!form || !input || !chatWindow) return;
+
+            form.addEventListener('submit', function () {
+                const text = input.value.trim();
+                if (!text) return; // server will handle empty gracefully
+
+                // ── Optimistic user bubble ───────────────────────────────────
+                const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const emptyState = chatWindow.querySelector('.empty-state');
+                if (emptyState) emptyState.remove();
+
+                const bubble = document.createElement('div');
+                bubble.className = 'message-container';
+                bubble.style.animationDelay = '0s';
+                bubble.innerHTML = `
+                    <div class="message-bubble message-user">
+                        <div class="message-sender"><i class="bi bi-person-fill"></i> You</div>
+                        <div class="message-content">${escapeHtml(text)}</div>
+                        <span class="message-meta">${now}</span>
+                    </div>`;
+                chatWindow.appendChild(bubble);
+
+                // ── Typing indicator ─────────────────────────────────────────
+                const typing = document.createElement('div');
+                typing.className = 'message-container';
+                typing.style.animationDelay = '0s';
+                typing.innerHTML = `
+                    <div class="message-bubble message-assistant" style="padding:0.75rem 1.2rem;">
+                        <div class="d-flex gap-1 align-items-center" style="height:1.5rem;">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>`;
+                chatWindow.appendChild(typing);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                // ── Disable button & show spinner to prevent double-submit ───
+                if (sendBtn) {
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Thinking…';
+                }
+
+                // NOTE: Do NOT clear input.value here — ASP.NET model binding
+                // reads it from the POST body. The server returns a clean empty
+                // field via PRG (RedirectToPage) after successful processing.
+            });
+
+            function escapeHtml(str) {
+                return str
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+        });
+    </script>
+
+    <style>
+        .typing-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #0d6efd;
+            animation: typingBounce 1.2s ease-in-out infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @@keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40%            { transform: scale(1);   opacity: 1;   }
+        }
+    </style>
+}
+
