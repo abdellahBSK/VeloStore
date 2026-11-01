@@ -41,11 +41,11 @@ namespace VeloStore.Data
                 // Seed Products
                 if (!context.Products.Any())
                 {
-                    var mtb = context.Categories.FirstOrDefault(c => c.Name == "Mountain Bikes");
-                    var road = context.Categories.FirstOrDefault(c => c.Name == "Road Bikes");
-                    var gravel = context.Categories.FirstOrDefault(c => c.Name == "Gravel Bikes");
-                    var ebikes = context.Categories.FirstOrDefault(c => c.Name == "Electric Bikes");
-                    var acc = context.Categories.FirstOrDefault(c => c.Name == "Accessories");
+                    var mtb = context.Categories.First(c => c.Name == "Mountain Bikes");
+                    var road = context.Categories.First(c => c.Name == "Road Bikes");
+                    var gravel = context.Categories.First(c => c.Name == "Gravel Bikes");
+                    var ebikes = context.Categories.First(c => c.Name == "Electric Bikes");
+                    var acc = context.Categories.First(c => c.Name == "Accessories");
 
                     context.Products.AddRange(
                         new Product

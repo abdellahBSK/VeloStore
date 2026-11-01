@@ -3,9 +3,9 @@
 ## 📍 Where the Cache is Located
 
 ### **Cache Services Location**
-- **Product Cache Service**: `VeloStore/Services/ProductCacheService.cs`
-- **Cart Service**: `VeloStore/Services/CartService.cs`
-- **Service Interfaces**: `VeloStore/Services/IProductCacheService.cs` and `VeloStore/Services/ICartService.cs`
+- **Product Cache Service**: `src/VeloStore/Services/ProductCacheService.cs`
+- **Cart Service**: `src/VeloStore/Services/CartService.cs`
+- **Service Interfaces**: `src/VeloStore/Services/IProductCacheService.cs` and `src/VeloStore/Services/ICartService.cs`
 
 ### **Cache Configuration**
 - **Program.cs** (lines 64-75): Configures multi-layer caching
@@ -22,7 +22,7 @@
 
 ## 🏠 Home Page (Index.cshtml.cs) - Cache Handling
 
-### **Location**: `VeloStore/Pages/Index.cshtml.cs`
+### **Location**: `src/VeloStore/Pages/Index.cshtml.cs`
 
 ### **How It Works**:
 
@@ -81,7 +81,7 @@
 
 ## 🛒 Cart Page (Cart/Index.cshtml.cs) - Cache Handling
 
-### **Location**: `VeloStore/Pages/Cart/Index.cshtml.cs`
+### **Location**: `src/VeloStore/Pages/Cart/Index.cshtml.cs`
 
 ### **How It Works**:
 
