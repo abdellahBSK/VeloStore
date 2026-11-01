@@ -1,0 +1,96 @@
+# VeloStore: full local stack.
+#
+#   docker compose up -d --build                 # store, SQL Server, Redis, pgvector
+#   docker compose --profile ai up -d --build    # ...plus Ollama for the AI assistant
+#
+# The store runs at http://localhost:8080. Passwords below are local development defaults only.
+
+name: velostore
+
+services:
+  web:
+    build: .
+    image: velostore-web
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=VeloStoreDB;User Id=sa;Password=${MSSQL_SA_PASSWORD:-VeloStore_Dev_123!};TrustServerCertificate=True"
+      ConnectionStrings__Redis: "redis:6379"
+      ConnectionStrings__VelostoreAiConnection: "Host=postgres;Port=5432;Database=velostore_ai;Username=ai;Password=${POSTGRES_PASSWORD:-ai}"
+      Ollama__BaseUrl: "http://ollama:11434"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-VeloStore_Dev_123!}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: velostore_ai
+      POSTGRES_USER: ai
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-ai}"
+    ports:
+      - "15433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai -d velostore_ai"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Optional: local LLM for the AI assistant (enable with --profile ai).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+  # Downloads the two models once, then exits.
+  ollama-models:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+    entrypoint: ["/bin/sh", "-c", "sleep 5 && ollama pull nomic-embed-text && ollama pull phi3:mini"]
+    restart: "no"
+
+volumes:
+  sqlserver-data:
+  postgres-data:
+  ollama-data:
